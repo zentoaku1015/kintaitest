@@ -1,0 +1,47 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Store {
+  id        String   @id @default(uuid())
+  name      String
+  address   String?
+  users     User[]   @relation("HomeStore")
+  attendances Attendance[]
+}
+
+model User {
+  id        String   @id @default(uuid())
+  code      String   @unique
+  name      String
+  password  String
+  homeStoreId String
+  homeStore Store    @relation("HomeStore", fields: [homeStoreId], references: [id])
+  attendances Attendance[]
+  role      String   @default("STAFF") // HEADQUARTERS, STORE_MANAGER, STAFF
+}
+
+model Attendance {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  storeId   String
+  store     Store    @relation(fields: [storeId], references: [id])
+  type      String   // CLOCK_IN, CLOCK_OUT, BREAK_START, BREAK_END
+  status    String?  // PAID_LEAVE, SPECIAL_LEAVE etc.
+  timestamp DateTime @default(now())
+
+  // Correction Tracking
+  isModified      Boolean  @default(false)
+  modifiedAt      DateTime?
+  modifiedBy      String?
+  originalTimestamp DateTime?
+
+  // Enterprise Extensions
+  note        String?
+}
